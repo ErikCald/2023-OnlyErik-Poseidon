@@ -6,6 +6,7 @@ package frc.robot;
 
 import frc.robot.Config.JoystickConfig;
 import frc.robot.auto.Autos;
+import frc.robot.subsystems.ArmSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -18,6 +19,8 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  * commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
+    // Subsystems
+    private final ArmSubsystem m_armSubsystem = new ArmSubsystem();
 
     // Joysticks
     private final CommandXboxController driver = new CommandXboxController(JoystickConfig.DRIVER_JOYSTICK_PORT);
