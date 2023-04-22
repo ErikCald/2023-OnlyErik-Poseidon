@@ -110,10 +110,10 @@ public final class Config {
             public static final SingleJointedArmSim ARM0_SIM = new SingleJointedArmSim(
                     DCMotor.getNEO(1),
                     ARM0_GEAR_RATIO,
-                    SingleJointedArmSim.estimateMOI(ARM0_LENGTH, ARM0_MASS_KG),
-                    ARM0_LENGTH,
-                    Units.degreesToRadians(-75),
-                    Units.degreesToRadians(255),
+                    SingleJointedArmSim.estimateMOI(Units.inchesToMeters(ARM0_LENGTH), ARM0_MASS_KG),
+                    Units.inchesToMeters(ARM0_LENGTH),
+                    Arm.ARM0_REVERSE_LIMIT,
+                    Arm.ARM0_FORWARD_LIMIT,
                     false, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
                     VecBuilder.fill(ARM0_NOISE) // Add noise with a small std-dev
             );
@@ -121,10 +121,10 @@ public final class Config {
             public static final SingleJointedArmSim ARM1_SIM = new SingleJointedArmSim(
                     DCMotor.getNEO(1),
                     ARM1_GEAR_RATIO,
-                    SingleJointedArmSim.estimateMOI(ARM1_LENGTH, ARM1_MASS_KG),
+                    SingleJointedArmSim.estimateMOI(Units.inchesToMeters(ARM1_LENGTH), ARM1_MASS_KG),
                     Units.inchesToMeters(ARM1_LENGTH), 
-                    Units.degreesToRadians(-75),
-                    Units.degreesToRadians(255),
+                    Arm.ARM1_REVERSE_LIMIT,
+                    Arm.ARM1_FORWARD_LIMIT,
                     false, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
                     VecBuilder.fill(ARM1_NOISE) // Add noise with a small std-dev
             );
