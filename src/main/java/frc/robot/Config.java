@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.revrobotics.CANSparkMax.IdleMode;
+
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
@@ -21,6 +23,38 @@ public final class Config {
         public static final int OPERATOR_JOYSTICK_PORT = 1;
     }
 
+    /**
+     * CAN IDs, ports, channels, etc.
+     */
+    public static class CANID {   
+        public static int PIGEON = 30; //robotSpecific(30, 27, 27, 27, 30);
+    
+        public static int CANDLE = 15;//robotSpecific(15, 15, -1, 15, 15);
+        public static int CTRE_PCM = 1;//robotSpecific(1, 1, -1, -1);
+
+        // Swerve Drive
+        public static final int FRONT_LEFT_DRIVE = 24;
+        public static final int REAR_LEFT_DRIVE = 20;
+        public static final int FRONT_RIGHT_DRIVE = 21;
+        public static final int REAR_RIGHT_DRIVE = 27;
+
+        public static final int FRONT_LEFT_STEERING = 23;
+        public static final int REAR_LEFT_STEERING = 26;
+        public static final int FRONT_RIGHT_STEERING = 25;
+        public static final int REAR_RIGHT_STEERING = 22;
+
+        public static final int FRONT_LEFT_CANCODER = 9;
+        public static final int REAR_LEFT_CANCODER = 8;
+        public static final int FRONT_RIGHT_CANCODER = 6;
+        public static final int REAR_RIGHT_CANCODER = 7;
+
+        // Arm Subsystem
+        public static final int ARM1_SPARK = 5;
+        public static final int ARM0_SPARK = 4;
+    }
+    
+    public static int ANALOG_SELECTOR_PORT = 0;
+
     public static class Arm {
 
         public static final double ARM0_LENGTH = 27.75; // inches
@@ -35,6 +69,9 @@ public final class Config {
         public static final int ARM0_CURRENT_LIMIT = 60;
         public static final int ARM1_CURRENT_LIMIT = 60;
 
+        public static final IdleMode ARM0_IDLEMODE = IdleMode.kBrake;
+        public static final IdleMode ARM1_IDLEMODE = IdleMode.kBrake;
+
         public static final float ARM0_FORWARD_LIMIT = (float) Math.toRadians(135); // floats for CANSparkMax API
         public static final float ARM0_REVERSE_LIMIT = (float) Math.toRadians(40);
         public static final float ARM1_FORWARD_LIMIT = (float) Math.toRadians(190);
@@ -42,25 +79,30 @@ public final class Config {
         public static final boolean ARM0_SOFT_LIMIT_ENABLE = true;
         public static final boolean ARM1_SOFT_LIMIT_ENABLE = true;
 
+        // Conversion Factors (CF)
+        public static final double ARM0_CF_POS = 2 * Math.PI / ARM0_GEAR_RATIO;
+        public static final double ARM0_CF_VEL = ARM0_CF_POS / 60.0;
+        public static final double ARM1_CF_POS = 2 * Math.PI / ARM1_GEAR_RATIO;
+        public static final double ARM1_CF_VEL = ARM1_CF_POS / 60.0;
         
 
         public static class ArmFeedforward {
-            public static final double TOP_HORIZONTAL_VOLTAGE = 1.5;
-            public static final double TOP_HORIZONTAL_VOLTAGE_CONE = 2.3;
-            public static final double BOTTOM_MOMENT_TO_VOLTAGE = 0.000005;
+            public static final double ARM1_HORIZONTAL_VOLTAGE = 1.5;
+            public static final double ARM1_HORIZONTAL_VOLTAGE_CONE = 2.3;
+            public static final double ARM0_MOMENT_TO_VOLTAGE = 0.000005; 
 
-            public static final double LENGTH_BOTTOM_ARM_TO_COG = 14.56;
-            public static final double LENGTH_TOP_ARM_TO_COG = 28.22;
+            public static final double LENGTH_ARM0_TO_COG = 14.56;
+            public static final double LENGTH_ARM1_TO_COG = 28.22;
 
             public static final double GRAVITATIONAL_CONSTANT = 389.0886; // inches/s/s  which is equal to 9.81 m/s/s
-            public static final double BOTTOM_ARM_FORCE = 11.29 * GRAVITATIONAL_CONSTANT; // 11.29 lb
-            public static final double TOP_ARM_FORCE = 7.77 * GRAVITATIONAL_CONSTANT; // 7.77 lb
-            public static final double CONE_ARM_FORCE = 1.21 * GRAVITATIONAL_CONSTANT; // 1.21 lb
+            public static final double ARM0_FORCE = 11.29 * GRAVITATIONAL_CONSTANT; // 11.29 lb
+            public static final double ARM1_FORCE = 7.77 * GRAVITATIONAL_CONSTANT; // 7.77 lb
+            public static final double CONE_FORCE = 1.21 * GRAVITATIONAL_CONSTANT; // 1.21 lb
         }        
 
         public static class ArmSimulation {
-            public static final double ARM0_MASS = 0;
-            public static final double ARM1_MASS = 0;
+            public static final double ARM0_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM0_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
+            public static final double ARM1_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM1_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
 
             public static final double ARM0_NOISE = 2.0 * Math.PI / 4096;
             public static final double ARM1_NOISE = 2.0 * Math.PI / 4096;
@@ -68,22 +110,22 @@ public final class Config {
             public static final SingleJointedArmSim ARM0_SIM = new SingleJointedArmSim(
                     DCMotor.getNEO(1),
                     ARM0_GEAR_RATIO,
-                    SingleJointedArmSim.estimateMOI(ARM0_LENGTH, ARM0_MASS),
+                    SingleJointedArmSim.estimateMOI(ARM0_LENGTH, ARM0_MASS_KG),
                     ARM0_LENGTH,
                     Units.degreesToRadians(-75),
                     Units.degreesToRadians(255),
-                    false, // Don't simulate gravity on the bottom arm
+                    false, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
                     VecBuilder.fill(ARM0_NOISE) // Add noise with a small std-dev
             );
 
             public static final SingleJointedArmSim ARM1_SIM = new SingleJointedArmSim(
                     DCMotor.getNEO(1),
                     ARM1_GEAR_RATIO,
-                    SingleJointedArmSim.estimateMOI(ARM1_LENGTH, ARM1_MASS),
-                    ARM1_LENGTH,
+                    SingleJointedArmSim.estimateMOI(ARM1_LENGTH, ARM1_MASS_KG),
+                    Units.inchesToMeters(ARM1_LENGTH), 
                     Units.degreesToRadians(-75),
                     Units.degreesToRadians(255),
-                    true,
+                    false, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
                     VecBuilder.fill(ARM1_NOISE) // Add noise with a small std-dev
             );
         }
