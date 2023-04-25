@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.pathplanner.lib.PathPlanner;
@@ -23,6 +24,7 @@ public class ArmPaths {
     PathPlannerTrajectory pickupToTop,
                           topToMiddle,
                           middleToPickup;
+    List<PathPlannerTrajectory> testPath1;
 
 
     public ArmPaths(ArmSubsystem armSubsystem) {
@@ -45,6 +47,7 @@ public class ArmPaths {
         pickupToTop = PathPlanner.loadPath("homeToTop", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
         topToMiddle = PathPlanner.loadPath("topToMiddle", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
         middleToPickup = PathPlanner.loadPath("middleToHome", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
+        testPath1 = PathPlanner.loadPathGroup("testPath1", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
     }
 
     public CommandBase pickupToTopCommand() {
@@ -57,6 +60,10 @@ public class ArmPaths {
 
     public CommandBase middleToPickupCommand() {
         return armBuilder.followPath(middleToPickup);
+    }
+
+    public CommandBase testPath1() {
+        return armBuilder.followPathGroup(testPath1);
     }
 
 

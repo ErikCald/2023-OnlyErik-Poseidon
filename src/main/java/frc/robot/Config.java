@@ -64,7 +64,7 @@ public final class Config {
         public static final double ARM1_LENGTH = Units.inchesToMeters(38.6);
 
         public static final double ARM0_GEAR_RATIO = 62.5; // A number greater than 1 represents a reduction
-        public static final double ARM1_GEAR_RATIO = 23.5;
+        public static final double ARM1_GEAR_RATIO = 60;// 23.5;
 
         public static final boolean ARM0_INVERTED = true;
         public static final boolean ARM1_INVERTED = true;
@@ -75,8 +75,8 @@ public final class Config {
         public static final IdleMode ARM0_IDLEMODE = IdleMode.kBrake;
         public static final IdleMode ARM1_IDLEMODE = IdleMode.kBrake;
 
-        public static final float ARM0_FORWARD_LIMIT = (float) Math.toRadians(135); // floats for CANSparkMax API
-        public static final float ARM0_REVERSE_LIMIT = (float) Math.toRadians(40);
+        public static final float ARM0_FORWARD_LIMIT = (float) Math.toRadians(200); // floats for CANSparkMax API
+        public static final float ARM0_REVERSE_LIMIT = (float) Math.toRadians(25);
         public static final float ARM1_FORWARD_LIMIT = (float) Math.toRadians(190);
         public static final float ARM1_REVERSE_LIMIT = (float) Math.toRadians(7);
         public static final boolean ARM0_SOFT_LIMIT_ENABLE = true;
@@ -89,11 +89,11 @@ public final class Config {
         public static final double ARM1_CF_VEL = ARM1_CF_POS / 60.0;
         
         public static class ArmPid {
-            public static final PIDConstants ARM0_PID = new PIDConstants(0, 0, 0);
+            public static final PIDConstants ARM0_PID = new PIDConstants(0.1, 0, 0);
             public static final double ARM0_FF = 0;
             public static final double ARM0_IZONE = 0;
 
-            public static final PIDConstants ARM1_PID = new PIDConstants(0, 0, 0);
+            public static final PIDConstants ARM1_PID = new PIDConstants(0.1, 0, 0);
             public static final double ARM1_FF = 0;
             public static final double ARM1_IZONE = 0;
         }
@@ -102,8 +102,8 @@ public final class Config {
             /**
              * Angular velocity feedforward
              */
-            public static final SimpleMotorFeedforward ARM0_SIMEPLE_FF = new SimpleMotorFeedforward(0, 0, 0);
-            public static final SimpleMotorFeedforward ARM1_SIMEPLE_FF = new SimpleMotorFeedforward(0, 0, 0);
+            public static final SimpleMotorFeedforward ARM0_SIMEPLE_FF = new SimpleMotorFeedforward(0, 0.11, 0);
+            public static final SimpleMotorFeedforward ARM1_SIMEPLE_FF = new SimpleMotorFeedforward(0, 0.11, 0);
 
             /**
              * Gravity Compensation
@@ -126,8 +126,8 @@ public final class Config {
             public static final double ARM0_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM0_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
             public static final double ARM1_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM1_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
 
-            public static final double ARM0_NOISE = 2.0 * Math.PI / 4096;
-            public static final double ARM1_NOISE = 2.0 * Math.PI / 4096;
+            public static final double ARM0_NOISE = 0;// 2.0 * Math.PI / 4096;
+            public static final double ARM1_NOISE = 0;// 2.0 * Math.PI / 4096;
 
             public static final SingleJointedArmSim ARM0_SIM = new SingleJointedArmSim(
                     DCMotor.getNEO(1),
@@ -155,11 +155,11 @@ public final class Config {
         public static class ArmPathPlanner {
             public static final Translation2d IMAGE_TO_ARM_OFFSET = new Translation2d(1.82, 0.46);
 
-            public static final PIDConstants TRANSLATION_PID_CONSTANTS = new PIDConstants(0, 0, 0);
+            public static final PIDConstants TRANSLATION_PID_CONSTANTS = new PIDConstants(10, 0, 0);
             public static final PIDConstants ROTATION_PID_CONSTANTS = new PIDConstants(0, 0, 0);
 
-            public static final double VEL = 0.5;
-            public static final double ACCEL = 0.5;
+            public static final double VEL = 4;
+            public static final double ACCEL = 4;
         }
     }
 

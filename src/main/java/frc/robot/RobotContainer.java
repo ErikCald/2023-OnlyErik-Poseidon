@@ -6,6 +6,8 @@ package frc.robot;
 
 import frc.robot.Config.JoystickConfig;
 import frc.robot.auto.Autos;
+import frc.robot.commands.TestArmDynamics;
+import frc.robot.commands.TestArmJointControl;
 import frc.robot.subsystems.ArmPaths;
 import frc.robot.subsystems.ArmSubsystem;
 
@@ -47,9 +49,11 @@ public class RobotContainer {
      */
     private void configureBindings() {
         // a,b,x,y
-        driver.a().onTrue(m_armPaths.pickupToTopCommand());
-        driver.b().onTrue(m_armPaths.topToMiddleCommand());
+        driver.a().onTrue(m_armPaths.testPath1());
+        // driver.b().onTrue(m_armPaths.topToMiddleCommand());
         driver.x().onTrue(m_armPaths.middleToPickupCommand());
+
+        driver.y().toggleOnTrue(new TestArmDynamics(m_armSubsystem, driver));
     }
 
     /**

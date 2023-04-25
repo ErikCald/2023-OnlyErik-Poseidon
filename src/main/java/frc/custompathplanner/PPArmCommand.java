@@ -88,6 +88,9 @@ public class PPArmCommand extends CommandBase {
         if (logSetpoint != null) {
             logSetpoint.accept(targetArmSpeeds);
         }
+
+        // System.out.println(currentPose);
+        // System.out.println(targetArmSpeeds);
     }
 
     @Override
@@ -137,6 +140,6 @@ public class PPArmCommand extends CommandBase {
         PPArmCommand.logActiveTrajectory = logActiveTrajectory;
         PPArmCommand.logTargetPose = logTargetPose;
         PPArmCommand.logSetpoint = logSetpoint;
-        PPArmCommand.logError = logError;
+        // PPArmCommand.logError = logError;
     }
 }

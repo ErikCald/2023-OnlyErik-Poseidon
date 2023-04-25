@@ -18,7 +18,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -32,6 +31,7 @@ import frc.robot.Config.Arm.ArmPathPlanner;
 import frc.robot.Config.Arm.ArmPid;
 import frc.robot.Config.Arm.ArmSimulation;
 import frc.robot.Config.CANID;
+import frc.custompathplanner.PPArmCommand;
 import frc.robot.Robot;
 
 public class ArmSubsystem extends SubsystemBase {
@@ -46,6 +46,7 @@ public class ArmSubsystem extends SubsystemBase {
     /** Creates a new ArmSubsystem. */
     public ArmSubsystem() {
         m_armDisplay = new ArmDisplay(Units.metersToInches(Arm.ARM0_LENGTH), Units.metersToInches(Arm.ARM1_LENGTH));
+        PPArmCommand.setLoggingCallbacks(null, this::setSetpointDisplay, null, null);
 
         m_motor0 = new CANSparkMax(CANID.ARM0_SPARK, MotorType.kBrushless);
         m_motor1 = new CANSparkMax(CANID.ARM1_SPARK, MotorType.kBrushless);
@@ -117,6 +118,8 @@ public class ArmSubsystem extends SubsystemBase {
         double motor0AppliedOutput = m_motor0.getAppliedOutput();
         double motor1AppliedOutput = m_motor1.getAppliedOutput();
 
+        // System.out.println(motor0AppliedOutput);
+
         // Disable the simulation when the robot is disabled
         if (DriverStation.isDisabled()) {
             motor0AppliedOutput = 0;
@@ -139,6 +142,11 @@ public class ArmSubsystem extends SubsystemBase {
         RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(
             ArmSimulation.ARM0_SIM.getCurrentDrawAmps(),
             ArmSimulation.ARM1_SIM.getCurrentDrawAmps()));
+    }
+
+    public void setSetpointDisplay(Pose2d targetPose) {
+        Rotation2d[] angles = inverseKinematics(targetPose.getTranslation());
+        m_armDisplay.updateSetpointDisplay(angles[0].getRadians(), angles[1].getRadians());
     }
 
     public Rotation2d getArm0Position() {
@@ -222,13 +230,11 @@ public class ArmSubsystem extends SubsystemBase {
             forwardKinematics(
                 getArm0Position(), 
                 getArm1Position()
-            ).minus(ArmPathPlanner.IMAGE_TO_ARM_OFFSET),
+            ).plus(ArmPathPlanner.IMAGE_TO_ARM_OFFSET),
             new Rotation2d());
     }
 
-    public double[] inverseDyanmics(double xSpeed, double ySpeed) {
-        SwerveDriveKinematics s;
-
+    public double[] inverseVelocityKinematics(double xSpeed, double ySpeed) {
         SimpleMatrix velMatrix = new SimpleMatrix(2, 1);
         velMatrix.setColumn(0, 0, xSpeed, ySpeed);
 
@@ -238,24 +244,40 @@ public class ArmSubsystem extends SubsystemBase {
         double q1 = getArm1Position().getRadians() - Math.PI;
         double q0q1 = q0+q1;
 
-        double inverseScalar = 1 / (a0*a1*Math.sin(q1));
-        SimpleMatrix jabocean = new SimpleMatrix(2, 2);
-        jabocean.setRow(0, 0, 
-            inverseScalar*a1*Math.cos(q0q1),
-            inverseScalar*a1*Math.sin(q0q1)
-        );
-        jabocean.setRow(1, 0, 
-            inverseScalar*-a0*Math.cos(q0)-a1*Math.cos(q0q1),
-            inverseScalar*-a0*Math.sin(q0)-a1*Math.sin(q0q1)
-        );
 
-        SimpleMatrix angularVelsMatrix = jabocean.mult(velMatrix); 
+        // ATTEMPT 1
+        // double inverseScalar = 1 / (a0*a1*Math.sin(q1));
+        // SimpleMatrix jacobian = new SimpleMatrix(2, 2);
+        // jacobian.setRow(0, 0, 
+        //     inverseScalar*a1*Math.cos(q0q1),
+        //     inverseScalar*a1*Math.sin(q0q1)
+        // );
+        // jacobian.setRow(1, 0, 
+        //     inverseScalar*-a0*Math.cos(q0)-a1*Math.cos(q0q1),
+        //     inverseScalar*-a0*Math.sin(q0)-a1*Math.sin(q0q1)
+        // );
 
+
+        // ATTEMPT 2
+        SimpleMatrix jacobian = new SimpleMatrix(2, 2);
+        jacobian.setRow(0, 0, 
+            -a0*Math.sin(q0)-a1*Math.sin(q0q1),
+            -a1*Math.sin(q0q1)
+        );
+        jacobian.setRow(1, 0, 
+            a0*Math.cos(q0)+a1*Math.cos(q0q1),
+            a1*Math.cos(q0q1)
+        );
+        jacobian = jacobian.invert();
+
+        SimpleMatrix angularVelsMatrix = jacobian.mult(velMatrix); 
+
+        System.out.println(angularVelsMatrix);
         return new double[]{angularVelsMatrix.get(0, 0), angularVelsMatrix.get(1, 0)};
     }
 
     public void setArmSpeeds(ChassisSpeeds speeds) {
-        double[] angularSpeeds = inverseDyanmics(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+        double[] angularSpeeds = inverseVelocityKinematics(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
         setArm0Speed(angularSpeeds[0]);
         setArm1Speed(angularSpeeds[1]);
     }
@@ -267,8 +289,11 @@ public class ArmSubsystem extends SubsystemBase {
         } else {
             voltage = ArmFeedforward.ARM0_SIMEPLE_FF.calculate(angularSpeed);
         }
+        // System.out.println(angularSpeed +", "+ voltage);
 
-        m_sparkPid0.setReference(angularSpeed, ControlType.kVelocity, 0, voltage);
+        // m_sparkPid0.setReference(angularSpeed, ControlType.kVelocity, 0, voltage);
+
+        m_sparkPid0.setReference(voltage, ControlType.kVoltage);
     }
 
     public void setArm1Speed(double angularSpeed) {
@@ -279,6 +304,8 @@ public class ArmSubsystem extends SubsystemBase {
             voltage = ArmFeedforward.ARM1_SIMEPLE_FF.calculate(angularSpeed);
         }
         
-        m_sparkPid1.setReference(angularSpeed, ControlType.kVelocity, 0, voltage);
+        // m_sparkPid1.setReference(angularSpeed, ControlType.kVelocity, 0, voltage);
+
+        m_sparkPid1.setReference(voltage, ControlType.kVoltage);
     }
 }

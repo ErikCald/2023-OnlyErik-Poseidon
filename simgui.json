@@ -42,6 +42,12 @@
         "open": true
       },
       "SmartDashboard": {
+        "ArmDisplay": {
+          "open": true
+        },
+        "PPArmCommand": {
+          "open": true
+        },
         "open": true
       }
     }
