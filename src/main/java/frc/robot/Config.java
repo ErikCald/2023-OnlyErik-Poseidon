@@ -4,9 +4,12 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.auto.PIDConstants;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
@@ -57,8 +60,8 @@ public final class Config {
 
     public static class Arm {
 
-        public static final double ARM0_LENGTH = 27.75; // inches
-        public static final double ARM1_LENGTH = 38.6; // inches
+        public static final double ARM0_LENGTH = Units.inchesToMeters(27.75);
+        public static final double ARM1_LENGTH = Units.inchesToMeters(38.6);
 
         public static final double ARM0_GEAR_RATIO = 62.5; // A number greater than 1 represents a reduction
         public static final double ARM1_GEAR_RATIO = 23.5;
@@ -85,8 +88,26 @@ public final class Config {
         public static final double ARM1_CF_POS = 2 * Math.PI / ARM1_GEAR_RATIO;
         public static final double ARM1_CF_VEL = ARM1_CF_POS / 60.0;
         
+        public static class ArmPid {
+            public static final PIDConstants ARM0_PID = new PIDConstants(0, 0, 0);
+            public static final double ARM0_FF = 0;
+            public static final double ARM0_IZONE = 0;
+
+            public static final PIDConstants ARM1_PID = new PIDConstants(0, 0, 0);
+            public static final double ARM1_FF = 0;
+            public static final double ARM1_IZONE = 0;
+        }
 
         public static class ArmFeedforward {
+            /**
+             * Angular velocity feedforward
+             */
+            public static final SimpleMotorFeedforward ARM0_SIMEPLE_FF = new SimpleMotorFeedforward(0, 0, 0);
+            public static final SimpleMotorFeedforward ARM1_SIMEPLE_FF = new SimpleMotorFeedforward(0, 0, 0);
+
+            /**
+             * Gravity Compensation
+             */
             public static final double ARM1_HORIZONTAL_VOLTAGE = 1.5;
             public static final double ARM1_HORIZONTAL_VOLTAGE_CONE = 2.3;
             public static final double ARM0_MOMENT_TO_VOLTAGE = 0.000005; 
@@ -101,6 +122,7 @@ public final class Config {
         }        
 
         public static class ArmSimulation {
+            public static final boolean SIMULATE_GRAVITY = false; // SingleJointedArmSim doesn't know it's a double jointed arm.
             public static final double ARM0_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM0_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
             public static final double ARM1_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM1_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
 
@@ -110,24 +132,34 @@ public final class Config {
             public static final SingleJointedArmSim ARM0_SIM = new SingleJointedArmSim(
                     DCMotor.getNEO(1),
                     ARM0_GEAR_RATIO,
-                    SingleJointedArmSim.estimateMOI(Units.inchesToMeters(ARM0_LENGTH), ARM0_MASS_KG),
-                    Units.inchesToMeters(ARM0_LENGTH),
+                    SingleJointedArmSim.estimateMOI(ARM0_LENGTH, ARM0_MASS_KG),
+                    ARM0_LENGTH,
                     Arm.ARM0_REVERSE_LIMIT,
                     Arm.ARM0_FORWARD_LIMIT,
-                    false, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
+                    SIMULATE_GRAVITY, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
                     VecBuilder.fill(ARM0_NOISE) // Add noise with a small std-dev
             );
 
             public static final SingleJointedArmSim ARM1_SIM = new SingleJointedArmSim(
                     DCMotor.getNEO(1),
                     ARM1_GEAR_RATIO,
-                    SingleJointedArmSim.estimateMOI(Units.inchesToMeters(ARM1_LENGTH), ARM1_MASS_KG),
-                    Units.inchesToMeters(ARM1_LENGTH), 
+                    SingleJointedArmSim.estimateMOI(ARM1_LENGTH, ARM1_MASS_KG),
+                    ARM1_LENGTH, 
                     Arm.ARM1_REVERSE_LIMIT,
                     Arm.ARM1_FORWARD_LIMIT,
-                    false, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
+                    SIMULATE_GRAVITY, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
                     VecBuilder.fill(ARM1_NOISE) // Add noise with a small std-dev
             );
+        }
+
+        public static class ArmPathPlanner {
+            public static final Translation2d IMAGE_TO_ARM_OFFSET = new Translation2d(1.82, 0.46);
+
+            public static final PIDConstants TRANSLATION_PID_CONSTANTS = new PIDConstants(0, 0, 0);
+            public static final PIDConstants ROTATION_PID_CONSTANTS = new PIDConstants(0, 0, 0);
+
+            public static final double VEL = 0.5;
+            public static final double ACCEL = 0.5;
         }
     }
 

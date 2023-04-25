@@ -6,7 +6,13 @@ package frc.robot;
 
 import frc.robot.Config.JoystickConfig;
 import frc.robot.auto.Autos;
+import frc.robot.subsystems.ArmPaths;
 import frc.robot.subsystems.ArmSubsystem;
+
+import com.pathplanner.lib.commands.PPRamseteCommand;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
+
+import edu.wpi.first.wpilibj.XboxController.Button;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -21,6 +27,8 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 public class RobotContainer {
     // Subsystems
     private final ArmSubsystem m_armSubsystem = new ArmSubsystem();
+
+    private final ArmPaths m_armPaths = new ArmPaths(m_armSubsystem);
 
     // Joysticks
     private final CommandXboxController driver = new CommandXboxController(JoystickConfig.DRIVER_JOYSTICK_PORT);
@@ -38,6 +46,10 @@ public class RobotContainer {
      * Use this method to define your trigger->command mappings.
      */
     private void configureBindings() {
+        // a,b,x,y
+        driver.a().onTrue(m_armPaths.pickupToTopCommand());
+        driver.b().onTrue(m_armPaths.topToMiddleCommand());
+        driver.x().onTrue(m_armPaths.middleToPickupCommand());
     }
 
     /**
@@ -45,7 +57,7 @@ public class RobotContainer {
      *
      * @return the command to run in autonomous
      */
-    public Command getAutonomousCommand() {
+    public Command getAutonomousCommand() {        
         // An example command will be run in autonomous
         return Autos.doNothing();
     }

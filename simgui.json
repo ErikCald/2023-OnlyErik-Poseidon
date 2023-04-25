@@ -1,7 +1,22 @@
 {
+  "HALProvider": {
+    "Other Devices": {
+      "SPARK MAX [4]": {
+        "header": {
+          "open": true
+        }
+      },
+      "SPARK MAX [5]": {
+        "header": {
+          "open": true
+        }
+      }
+    }
+  },
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
+      "/Shuffleboard/BasicDebugging/CommandScheduler": "Scheduler",
       "/SmartDashboard/ArmDisplay": "Mechanism2d"
     },
     "windows": {
@@ -9,6 +24,25 @@
         "window": {
           "visible": true
         }
+      }
+    }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "LiveWindow": {
+        "open": true
+      },
+      "Shuffleboard": {
+        "BasicDebugging": {
+          "CommandScheduler": {
+            "open": true
+          },
+          "open": true
+        },
+        "open": true
+      },
+      "SmartDashboard": {
+        "open": true
       }
     }
   }
