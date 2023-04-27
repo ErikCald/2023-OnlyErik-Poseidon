@@ -24,24 +24,53 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.custompathplanner.PPArmCommand;
 import frc.robot.Config.Arm;
 import frc.robot.Config.Arm.ArmFeedforward;
 import frc.robot.Config.Arm.ArmPathPlanner;
 import frc.robot.Config.Arm.ArmPid;
 import frc.robot.Config.Arm.ArmSimulation;
 import frc.robot.Config.CANID;
-import frc.custompathplanner.PPArmCommand;
 import frc.robot.Robot;
 
 public class ArmSubsystem extends SubsystemBase {
+    public enum Arm1Bias {
+        PositiveVelocityBias(0.06, 0.3),
+        NegativeVelocityBias(0.06, -0.3),
+        HeavyPositiveVelocityBias(0.1, 0.7),
+        HeavyNegativeVelocityBias(0.1, -0.7);
+
+        private static final double HEAVY_DETERMINANT_RANGE = 0.1;
+        private static final double LIGHT_DETERMINANT_RANGE = 0.06;
+        private static final double HEAVY_VELOCITY_BIAS = 0.3;
+        private static final double LIGHT_VELOCITY_BIAS = 0.7;
+
+        private double determinantRange, angularVelocityBias;
+        private Arm1Bias(double determinantRange, double angularVelocityBias) {
+            this.determinantRange = determinantRange;
+            this.angularVelocityBias = angularVelocityBias;
+        }
+
+        public double getDeterminantRange() {
+            return determinantRange;
+        }
+
+        public double getAngularVelocityBias() {
+            return angularVelocityBias;
+        }
+    }
+    
     ArmDisplay m_armDisplay;
 
     CANSparkMax m_motor0, m_motor1;
     RelativeEncoder m_neoEncoder0, m_neoEncoder1;
     SparkMaxPIDController m_sparkPid0, m_sparkPid1;
 
-    private boolean haveCone;
+    private boolean m_haveCone;
+    private Arm1Bias m_arm1VelBias = Arm1Bias.NegativeVelocityBias;
 
     /** Creates a new ArmSubsystem. */
     public ArmSubsystem() {
@@ -160,7 +189,7 @@ public class ArmSubsystem extends SubsystemBase {
     private double calculateArm0GravityComp() {
         double enc2AtHorizontal = getArm1Position().getRadians() - (Math.PI - getArm0Position().getRadians());
         double voltsAtHorizontal;
-        if (haveCone) {
+        if (m_haveCone) {
             voltsAtHorizontal = ArmFeedforward.ARM1_HORIZONTAL_VOLTAGE_CONE;
         } else {
             voltsAtHorizontal = ArmFeedforward.ARM1_HORIZONTAL_VOLTAGE;
@@ -175,7 +204,7 @@ public class ArmSubsystem extends SubsystemBase {
         double arm0Moment = ArmFeedforward.ARM0_FORCE * (ArmFeedforward.LENGTH_ARM0_TO_COG * Math.cos(encoder0Rad));
         double arm1Moment = ArmFeedforward.ARM1_FORCE * (Units.metersToInches(Arm.ARM0_LENGTH) * Math.cos(encoder0Rad)
                 + ArmFeedforward.LENGTH_ARM1_TO_COG * Math.cos(enc1AtHorizontal));
-        if (haveCone == false) {
+        if (m_haveCone == false) {
             return (arm0Moment + arm1Moment) * ArmFeedforward.ARM0_MOMENT_TO_VOLTAGE;
         } else {
             double coneMoment = ArmFeedforward.CONE_FORCE
@@ -268,18 +297,68 @@ public class ArmSubsystem extends SubsystemBase {
             a0*Math.cos(q0)+a1*Math.cos(q0q1),
             a1*Math.cos(q0q1)
         );
+        double determinant = jacobian.determinant();
         jacobian = jacobian.invert();
 
+        
         SimpleMatrix angularVelsMatrix = jacobian.mult(velMatrix); 
 
-        System.out.println(angularVelsMatrix);
-        return new double[]{angularVelsMatrix.get(0, 0), angularVelsMatrix.get(1, 0)};
+        return new double[]{angularVelsMatrix.get(0, 0), angularVelsMatrix.get(1, 0), determinant};
     }
 
     public void setArmSpeeds(ChassisSpeeds speeds) {
         double[] angularSpeeds = inverseVelocityKinematics(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
-        setArm0Speed(angularSpeeds[0]);
-        setArm1Speed(angularSpeeds[1]);
+
+        if (m_arm1VelBias == Arm1Bias.PositiveVelocityBias) {
+            if (Math.abs(angularSpeeds[2]) < m_arm1VelBias.getDeterminantRange() ||
+                    getArm1Position().getDegrees() <= 179) {
+                setArm0Speed(0);
+                setArm1Speed(2);
+            } else {
+                if (Math.abs(angularSpeeds[2]) < 0.04) {
+                    setArm0Speed(0);
+                } else {
+                    setArm0Speed(angularSpeeds[0]);
+                }
+                setArm1Speed(angularSpeeds[1]);
+            }
+        }
+        else if (m_arm1VelBias == Arm1Bias.NegativeVelocityBias) {
+            if (Math.abs(angularSpeeds[2]) < m_arm1VelBias.getDeterminantRange() ||
+                    getArm1Position().getDegrees() >= 179) {
+                setArm0Speed(0);
+                setArm1Speed(-2);
+            } else {
+                if (Math.abs(angularSpeeds[2]) < 0.04) {
+                    setArm0Speed(0);
+                } else {
+                    setArm0Speed(angularSpeeds[0]);
+                }
+                setArm1Speed(angularSpeeds[1]);
+            }
+        }
+        else if (m_arm1VelBias == Arm1Bias.HeavyPositiveVelocityBias) {
+            setArm0Speed(0);
+
+            if (Math.abs(angularSpeeds[2]) < m_arm1VelBias.getDeterminantRange() ||
+                    getArm1Position().getDegrees() <= 180+15) {
+                
+                setArm1Speed(7);
+            } else {
+                setArm1Speed(0);
+            }
+        }
+        else if (m_arm1VelBias == Arm1Bias.HeavyNegativeVelocityBias) {
+            setArm0Speed(0);
+
+            if (Math.abs(angularSpeeds[2]) < m_arm1VelBias.getDeterminantRange() ||
+                    getArm1Position().getDegrees() >= 180-15) {
+                
+                setArm1Speed(-7);
+            } else {
+                setArm1Speed(0);
+            }
+        }        
     }
 
     public void setArm0Speed(double angularSpeed) {
@@ -307,5 +386,9 @@ public class ArmSubsystem extends SubsystemBase {
         // m_sparkPid1.setReference(angularSpeed, ControlType.kVelocity, 0, voltage);
 
         m_sparkPid1.setReference(voltage, ControlType.kVoltage);
+    }
+
+    public CommandBase setArm1VelocityBias(Arm1Bias bias) {
+        return Commands.runOnce(() -> m_arm1VelBias = bias);
     }
 }

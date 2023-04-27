@@ -77,7 +77,7 @@ public final class Config {
 
         public static final float ARM0_FORWARD_LIMIT = (float) Math.toRadians(200); // floats for CANSparkMax API
         public static final float ARM0_REVERSE_LIMIT = (float) Math.toRadians(25);
-        public static final float ARM1_FORWARD_LIMIT = (float) Math.toRadians(190);
+        public static final float ARM1_FORWARD_LIMIT = (float) Math.toRadians(320);
         public static final float ARM1_REVERSE_LIMIT = (float) Math.toRadians(7);
         public static final boolean ARM0_SOFT_LIMIT_ENABLE = true;
         public static final boolean ARM1_SOFT_LIMIT_ENABLE = true;
@@ -126,8 +126,8 @@ public final class Config {
             public static final double ARM0_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM0_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
             public static final double ARM1_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM1_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
 
-            public static final double ARM0_NOISE = 0;// 2.0 * Math.PI / 4096;
-            public static final double ARM1_NOISE = 0;// 2.0 * Math.PI / 4096;
+            public static final double ARM0_NOISE =  2.0 * Math.PI / 4096;
+            public static final double ARM1_NOISE =  2.0 * Math.PI / 4096;
 
             public static final SingleJointedArmSim ARM0_SIM = new SingleJointedArmSim(
                     DCMotor.getNEO(1),
@@ -157,6 +157,9 @@ public final class Config {
 
             public static final PIDConstants TRANSLATION_PID_CONSTANTS = new PIDConstants(10, 0, 0);
             public static final PIDConstants ROTATION_PID_CONSTANTS = new PIDConstants(0, 0, 0);
+
+            // public static final double VEL = 0.6;
+            // public static final double ACCEL = 0.6;
 
             public static final double VEL = 4;
             public static final double ACCEL = 4;

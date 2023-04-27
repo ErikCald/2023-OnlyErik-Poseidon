@@ -16,6 +16,7 @@ import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 
 import edu.wpi.first.wpilibj.XboxController.Button;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -50,7 +51,12 @@ public class RobotContainer {
     private void configureBindings() {
         // a,b,x,y
         driver.a().onTrue(m_armPaths.testPath1());
-        // driver.b().onTrue(m_armPaths.topToMiddleCommand());
+        driver.b().onTrue(new SequentialCommandGroup(
+                        m_armPaths.pickupToTopCommand(),
+                        m_armPaths.topToBackPickup(),
+                        m_armPaths.backPickupToTop(),
+                        m_armPaths.topToPickup()
+        ));
         driver.x().onTrue(m_armPaths.middleToPickupCommand());
 
         driver.y().toggleOnTrue(new TestArmDynamics(m_armSubsystem, driver));

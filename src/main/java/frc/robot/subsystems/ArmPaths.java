@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.custompathplanner.ArmAutoBuilder;
 import frc.robot.Config.Arm.ArmPathPlanner;
+import frc.robot.subsystems.ArmSubsystem.Arm1Bias;
 
 /** Add your docs here. */
 public class ArmPaths {
@@ -23,13 +24,22 @@ public class ArmPaths {
 
     PathPlannerTrajectory pickupToTop,
                           topToMiddle,
-                          middleToPickup;
+                          middleToPickup,
+
+                          topToPickup,
+                          topToBackPickup,
+                          backPickupToTop;
     List<PathPlannerTrajectory> testPath1;
 
 
     public ArmPaths(ArmSubsystem armSubsystem) {
         armSub = armSubsystem;
         Map<String, Command> eventMap = new HashMap<String, Command>();
+
+        eventMap.put("heavyPosBias", armSub.setArm1VelocityBias(Arm1Bias.HeavyPositiveVelocityBias));
+        eventMap.put("heavyNegBias", armSub.setArm1VelocityBias(Arm1Bias.HeavyNegativeVelocityBias));
+        eventMap.put("lightPosBias", armSub.setArm1VelocityBias(Arm1Bias.PositiveVelocityBias));
+        eventMap.put("lightNegBias", armSub.setArm1VelocityBias(Arm1Bias.NegativeVelocityBias));
 
         armBuilder = new ArmAutoBuilder(
             armSub::forwardKinematicsPose,
@@ -48,10 +58,14 @@ public class ArmPaths {
         topToMiddle = PathPlanner.loadPath("topToMiddle", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
         middleToPickup = PathPlanner.loadPath("middleToHome", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
         testPath1 = PathPlanner.loadPathGroup("testPath1", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
+
+        topToPickup = PathPlanner.loadPath("topToPickup", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
+        topToBackPickup = PathPlanner.loadPath("topToBackPickup", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
+        backPickupToTop = PathPlanner.loadPath("backPickupToTop", ArmPathPlanner.VEL, ArmPathPlanner.ACCEL);
     }
 
     public CommandBase pickupToTopCommand() {
-        return armBuilder.followPath(pickupToTop);
+        return armBuilder.followPathWithEvents(pickupToTop);
     }
 
     public CommandBase topToMiddleCommand() {
@@ -66,6 +80,17 @@ public class ArmPaths {
         return armBuilder.followPathGroup(testPath1);
     }
 
+    public CommandBase topToPickup() {
+        return armBuilder.followPathWithEvents(topToPickup);
+    }
+
+    public CommandBase topToBackPickup() {
+        return armBuilder.followPathWithEvents(topToBackPickup);
+    }
+
+    public CommandBase backPickupToTop() {
+        return armBuilder.followPathWithEvents(backPickupToTop);
+    }
 
 
 }
