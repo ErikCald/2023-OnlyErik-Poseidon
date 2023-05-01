@@ -166,21 +166,26 @@ public class ArmSubsystem extends SubsystemBase {
         System.out.println(RobotController.getBatteryVoltage());
 
         // Pass the simulation with the inputs as voltages
-        ArmSimulation.ARM0_SIM.setInputVoltage(motor0AppliedOutput * RobotController.getBatteryVoltage(), ArmSimulation.ARM1_SIM.getAngleRads(), m_haveCone);
-        ArmSimulation.ARM1_SIM.setInputVoltage(motor1AppliedOutput * RobotController.getBatteryVoltage(), ArmSimulation.ARM0_SIM.getAngleRads());
+        // ArmSimulation.ARM0_SIM.setInputVoltage(motor0AppliedOutput * RobotController.getBatteryVoltage(), ArmSimulation.ARM1_SIM.getAngleRads(), m_haveCone);
+        // ArmSimulation.ARM1_SIM.setInputVoltage(motor1AppliedOutput * RobotController.getBatteryVoltage(), ArmSimulation.ARM0_SIM.getAngleRads());
+        ArmSimulation.ARM_SIM.setInputVoltages(
+            motor0AppliedOutput * RobotController.getBatteryVoltage(), 
+            motor1AppliedOutput * RobotController.getBatteryVoltage(), 
+            m_haveCone);
 
         // Update simulation
-        ArmSimulation.ARM0_SIM.update(0.020); // 20ms clock cycle
-        ArmSimulation.ARM1_SIM.update(0.020);
+        ArmSimulation.ARM_SIM.update(0.020);
+        // ArmSimulation.ARM0_SIM.update(0.020); // 20ms clock cycle
+        // ArmSimulation.ARM1_SIM.update(0.020);
 
         // Update encoder readings
-        m_neoEncoder0.setPosition(ArmSimulation.ARM0_SIM.getAngleRads());
-        m_neoEncoder1.setPosition(ArmSimulation.ARM1_SIM.getAngleRads());
+        m_neoEncoder0.setPosition(ArmSimulation.ARM_SIM.getFirstJointAngleRads());    //ArmSimulation.ARM0_SIM.getAngleRads());
+        m_neoEncoder1.setPosition(ArmSimulation.ARM_SIM.getSecondJointAngleRads());    //ArmSimulation.ARM1_SIM.getAngleRads());
 
         // Update the simulation of the load on the battery
         RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(
-            ArmSimulation.ARM0_SIM.getCurrentDrawAmps(),
-            ArmSimulation.ARM1_SIM.getCurrentDrawAmps()));
+            ArmSimulation.ARM_SIM.getFirstJointCurrentDrawAmps(),
+            ArmSimulation.ARM_SIM.getSecondJointCurrentDrawAmps()));
     }
 
     public void setSetpointDisplay(Pose2d targetPose) {

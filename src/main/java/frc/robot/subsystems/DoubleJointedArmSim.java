@@ -143,11 +143,11 @@ public class DoubleJointedArmSim {
 
             double firstJointMoment = fjArmMassKg * GRAVITATIONAL_CONSTANT * (fjDistanceToCOGMeters * Math.cos(firstJointAngleRad));
             double secondJointMoment = sjMassKg * GRAVITATIONAL_CONSTANT * 
-                            (Units.metersToInches(m_firstJointToSecondJointDistance) * Math.cos(firstJointAngleRad) + sjDistanceToCOGMeters * Math.cos(secondJointAtHorizontal));
+                            (m_firstJointToSecondJointDistance * Math.cos(firstJointAngleRad) + sjDistanceToCOGMeters * Math.cos(secondJointAtHorizontal));
 
             if (enableThirdBodyMass) {
-                double thirdBodyMoment = m_thirdBodyMassKg * GRAVITATIONAL_CONSTANT * (Units.metersToInches(fjDistanceToCOGMeters) * Math.cos(firstJointAngleRad) 
-                                                 + Units.metersToInches(sjDistanceToCOGMeters) * Math.cos(secondJointAtHorizontal));
+                double thirdBodyMoment = m_thirdBodyMassKg * GRAVITATIONAL_CONSTANT * (m_firstJointToSecondJointDistance * Math.cos(firstJointAngleRad) 
+                                                 + m_thirdBodyDistanceToCOGMeters * Math.cos(secondJointAtHorizontal));
                 return firstJointMoment + secondJointMoment + thirdBodyMoment;
             } else {
                 return firstJointMoment + secondJointMoment;
