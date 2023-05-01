@@ -1,16 +1,25 @@
 package frc.robot.subsystems;
 
+import java.util.function.BiFunction;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.NumericalIntegration;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import frc.robot.Config.Arm;
+import frc.robot.Config.Arm.ArmFeedforward;
+import frc.robot.Config.Arm.ArmSimulation;
 
-public class SecondJointArmSim extends SingleJointedArmSim {
+public class FirstJointArmSim1 extends SingleJointedArmSim {
 
-    double currentFirstJointAngleRad = 0;
+    double currentSecondJointAngleRad = 0;
+    boolean hasCone = false;
+
+
 
     // The length of the arm.
     private final double m_armLenMeters;
@@ -40,7 +49,7 @@ public class SecondJointArmSim extends SingleJointedArmSim {
      * @param simulateGravity    Whether gravity should be simulated or not.
      * @param measurementStdDevs The standard deviations of the measurements.
      */
-    public SecondJointArmSim(
+    public FirstJointArmSim1(
             DCMotor gearbox,
             double gearing,
             double jKgMetersSquared,
@@ -57,7 +66,7 @@ public class SecondJointArmSim extends SingleJointedArmSim {
                 maxAngleRads,
                 simulateGravity,
                 measurementStdDevs);
-
+        
         m_armLenMeters = armLengthMeters;
         m_minAngle = minAngleRads;
         m_maxAngle = maxAngleRads;
@@ -74,9 +83,10 @@ public class SecondJointArmSim extends SingleJointedArmSim {
      *
      * @param volts The input voltage.
      */
-    public void setInputVoltage(double volts, double firstJointAngleRad) {
+    public void setInputVoltage(double volts, double secondJointAngleRad, boolean hasCone) {
         setInput(volts);
-        currentFirstJointAngleRad = firstJointAngleRad;
+        currentSecondJointAngleRad = secondJointAngleRad;
+        this.hasCone = hasCone;
     }
 
     /**
@@ -117,7 +127,9 @@ public class SecondJointArmSim extends SingleJointedArmSim {
             (Matrix<N2, N1> x, Matrix<N1, N1> _u) -> {
               Matrix<N2, N1> xdot = m_plant.getA().times(x).plus(m_plant.getB().times(_u));
               if (m_simulateGravity) {
-                double alphaGrav = 3.0 / 2.0 * -9.8 * Math.cos(((x.get(0, 0) - (Math.PI - currentFirstJointAngleRad)))) / m_armLenMeters;
+                double alphaGrav = -1 * calculateFirstJointMomentDueToGravity(x.get(0, 0), currentSecondJointAngleRad, hasCone) /
+                                    calculateMomentOfInertia(x.get(0, 0), currentSecondJointAngleRad, hasCone);
+                
                 xdot = xdot.plus(VecBuilder.fill(0, alphaGrav));
               }
               return xdot;
@@ -136,4 +148,31 @@ public class SecondJointArmSim extends SingleJointedArmSim {
     return updatedXhat;
   }
 
+
+
+  public static double calculateFirstJointMomentDueToGravity(double firstJointAngleRad, double secondJointAngleRad, boolean hasCone) {
+    double secondJointAtHorizontal = secondJointAngleRad - (Math.PI - firstJointAngleRad);
+
+    double firstJointMoment = ArmFeedforward.ARM0_FORCE * (ArmFeedforward.LENGTH_ARM0_TO_COG * Math.cos(firstJointAngleRad));
+    double secondJointMoment = ArmFeedforward.ARM1_FORCE * (Units.metersToInches(Arm.ARM0_LENGTH) * Math.cos(firstJointAngleRad)
+            + ArmFeedforward.LENGTH_ARM1_TO_COG * Math.cos(secondJointAtHorizontal));
+    if (hasCone == false) {
+        return firstJointMoment + secondJointMoment;
+    } else {
+        double coneMoment = ArmFeedforward.CONE_FORCE
+                * (Units.metersToInches(Arm.ARM0_LENGTH) * Math.cos(firstJointAngleRad) + Units.metersToInches(Arm.ARM1_LENGTH) * Math.cos(secondJointAtHorizontal));
+        return firstJointMoment + secondJointMoment + coneMoment;
+    }
+}
+
+public static double calculateMomentOfInertia(double firstJointAngleRad, double secondJointAngleRad, boolean hasCone) {
+    if (hasCone) {
+        return ArmSimulation.ARM0_MASS_KG * ArmFeedforward.LENGTH_ARM0_TO_COG * ArmFeedforward.LENGTH_ARM0_TO_COG + 
+                ArmSimulation.ARM1_MASS_KG * ArmFeedforward.LENGTH_ARM1_TO_COG * ArmFeedforward.LENGTH_ARM1_TO_COG + 
+                ArmSimulation.CONE_MASS_KG * Arm.ARM1_LENGTH * Arm.ARM1_LENGTH;
+    } else {
+        return ArmSimulation.ARM0_MASS_KG * ArmFeedforward.LENGTH_ARM0_TO_COG * ArmFeedforward.LENGTH_ARM0_TO_COG + 
+                ArmSimulation.ARM1_MASS_KG * ArmFeedforward.LENGTH_ARM1_TO_COG * ArmFeedforward.LENGTH_ARM1_TO_COG;
+    }
+}
 }
