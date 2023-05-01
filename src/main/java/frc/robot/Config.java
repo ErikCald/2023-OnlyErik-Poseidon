@@ -13,8 +13,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import frc.robot.subsystems.FirstJointArmSim;
-import frc.robot.subsystems.SecondJointArmSim;
+import frc.robot.subsystems.FirstJointArmSim1;
+import frc.robot.subsystems.SecondJointArmSim1;
 
 /**
  * The Config class provides a convenient place for robot-wide numerical or
@@ -132,7 +132,7 @@ public final class Config {
             public static final double ARM0_NOISE =  2.0 * Math.PI / 4096;
             public static final double ARM1_NOISE =  2.0 * Math.PI / 4096;
 
-            public static final FirstJointArmSim ARM0_SIM = new FirstJointArmSim(
+            public static final FirstJointArmSim1 ARM0_SIM = new FirstJointArmSim1(
                     DCMotor.getNEO(1),
                     ARM0_GEAR_RATIO,
                     SingleJointedArmSim.estimateMOI(ARM0_LENGTH, ARM0_MASS_KG),
@@ -143,7 +143,7 @@ public final class Config {
                     VecBuilder.fill(ARM0_NOISE) // Add noise with a small std-dev
             );
 
-            public static final SecondJointArmSim ARM1_SIM = new SecondJointArmSim(
+            public static final SecondJointArmSim1 ARM1_SIM = new SecondJointArmSim1(
                     DCMotor.getNEO(1),
                     ARM1_GEAR_RATIO,
                     SingleJointedArmSim.estimateMOI(ARM1_LENGTH, ARM1_MASS_KG),

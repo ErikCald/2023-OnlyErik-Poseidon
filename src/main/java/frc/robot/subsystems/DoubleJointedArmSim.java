@@ -6,6 +6,8 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.NumericalIntegration;
@@ -67,7 +69,7 @@ public class DoubleJointedArmSim {
         m_thirdBodyDistanceToCOGMeters = thirdBodyDistanceToCOGMeters;
         
         m_firstJointSim = new FirstJointArmSim(firstJointGearbox, firstJointGearing, firstJointMinAngleRad, firstJointMaxAngleRad, firstJointMeasurementStdDevs);
-        m_secondJointSim = null; // TODO 
+        m_secondJointSim = new SecondJointArmSim(secondJointGearbox, secondJointGearing, secondJointMinAngleRad, secondJointMaxAngleRad, secondJointMeasurementStdDevs);
         m_simulateGravity = simulateGravity;
     }
 
@@ -123,7 +125,7 @@ public class DoubleJointedArmSim {
                 Matrix<N1, N1> measurementStdDevs) {
             super(gearbox,
                 gearing,
-                calculateFJMomentOfInertia(0, Math.PI, true) / 2.0, // Estimated Moment of inertia
+                (calculateFJMomentOfInertia(0, Math.PI, true) + calculateFJMomentOfInertia(0, 0, false)) / 2.0, // Estimated Moment of inertia
                 0, // Length of the arm is not needed since gravity calculation is overriden.
                 minAngleRads,
                 maxAngleRads,
@@ -194,7 +196,6 @@ public class DoubleJointedArmSim {
         }
     }
 
-    // TODO: ALL of second arm hasn't been touched much
     public class SecondJointArmSim extends SingleJointedArmSim {
         DCMotor sjGearbox;
         double sjGearing;
@@ -205,19 +206,16 @@ public class DoubleJointedArmSim {
         public SecondJointArmSim(
             DCMotor gearbox,
             double gearing,
-            double jKgMetersSquared,
-            double armLengthMeters,
             double minAngleRads,
             double maxAngleRads,
-            boolean simulateGravity,
             Matrix<N1, N1> measurementStdDevs) {
         super(gearbox,
                 gearing,
-                jKgMetersSquared,
-                armLengthMeters,
+                SingleJointedArmSim.estimateMOI(m_thirdBodyMassKg, sjMassKg + m_thirdBodyMassKg),
+                0, // Length of the arm is not needed since gravity calculation is overriden.
                 minAngleRads,
                 maxAngleRads,
-                simulateGravity,
+                m_simulateGravity,
                 measurementStdDevs);
 
             sjGearbox = gearbox;
@@ -267,7 +265,7 @@ public class DoubleJointedArmSim {
                     (Matrix<N2, N1> x, Matrix<N1, N1> _u) -> {
                     Matrix<N2, N1> xdot = m_plant.getA().times(x).plus(m_plant.getB().times(_u));
                     if (m_simulateGravity) {
-                        double alphaGrav = 3.0 / 2.0 * -9.8 * Math.cos(((x.get(0, 0) - (Math.PI - getFirstJointAngleRads())))) / m_armLenMeters;
+                        double alphaGrav = 3.0 / 2.0 * -9.8 * Math.cos(((x.get(0, 0) - (Math.PI - getFirstJointAngleRads())))) / m_thirdBodyDistanceToCOGMeters;
                         xdot = xdot.plus(VecBuilder.fill(0, alphaGrav));
                     }
                     return xdot;
@@ -288,14 +286,27 @@ public class DoubleJointedArmSim {
 
     }
 
-    private double calculateFJMomentOfInertia(double firstJointAngleRad, double secondJointAngleRad, boolean enableThirdBodyMass) { // TODO: Second joint and third body are wrong. Distance should be to the first joint axis.
+    private double calculateFJMomentOfInertia(double firstJointAngleRad, double secondJointAngleRad, boolean enableThirdBodyMass) {
+        double firstJointMomentOfInertia = fjArmMassKg * fjDistanceToCOGMeters * fjDistanceToCOGMeters;
+
+        double secondJointAtHorizontal = secondJointAngleRad - (Math.PI - firstJointAngleRad);
+        Translation2d secondJointTranlsation = new Translation2d(m_firstJointToSecondJointDistance, new Rotation2d(firstJointAngleRad));
+        
+        double secondJointRadius = secondJointTranlsation.plus(
+                            new Translation2d(sjDistanceToCOGMeters, new Rotation2d(secondJointAtHorizontal))).getNorm();
+        double secondJointMomentOfInertia = sjMassKg * secondJointRadius * secondJointRadius;
+        
         if (enableThirdBodyMass) {
-            return fjArmMassKg * fjDistanceToCOGMeters * fjDistanceToCOGMeters + 
-                    sjMassKg * sjDistanceToCOGMeters * sjDistanceToCOGMeters + 
-                    m_thirdBodyMassKg * m_thirdBodyDistanceToCOGMeters * m_thirdBodyDistanceToCOGMeters;
+            double thirdBodyRadius = secondJointTranlsation.plus(
+                            new Translation2d(m_thirdBodyDistanceToCOGMeters, new Rotation2d(secondJointAtHorizontal))).getNorm();
+            double thirdBodyMomentOfInertia = m_thirdBodyMassKg * thirdBodyRadius * thirdBodyRadius;
+
+            return firstJointMomentOfInertia + 
+                    secondJointMomentOfInertia + 
+                    thirdBodyMomentOfInertia;
         } else {
-            return fjArmMassKg * fjDistanceToCOGMeters * fjDistanceToCOGMeters + 
-                    sjMassKg * sjDistanceToCOGMeters * sjDistanceToCOGMeters;
+            return firstJointMomentOfInertia + 
+                    secondJointMomentOfInertia;
         }
     }
 }
