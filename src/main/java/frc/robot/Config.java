@@ -13,6 +13,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import frc.robot.subsystems.FirstJointArmSim;
+import frc.robot.subsystems.SecondJointArmSim;
 
 /**
  * The Config class provides a convenient place for robot-wide numerical or
@@ -108,9 +110,9 @@ public final class Config {
             /**
              * Gravity Compensation
              */
-            public static final double ARM1_HORIZONTAL_VOLTAGE = 1.5;
-            public static final double ARM1_HORIZONTAL_VOLTAGE_CONE = 2.3;
-            public static final double ARM0_MOMENT_TO_VOLTAGE = 0.000005; 
+            public static final double ARM1_HORIZONTAL_VOLTAGE = 0.114;// 0.26;  // Poseiden: 1.5;
+            public static final double ARM1_HORIZONTAL_VOLTAGE_CONE = 0.23; // Poseiden: 2.3;
+            public static final double ARM0_MOMENT_TO_VOLTAGE = 0.0000014;  // Poseiden: 0.000005; 
 
             public static final double LENGTH_ARM0_TO_COG = 14.56;
             public static final double LENGTH_ARM1_TO_COG = 28.22;
@@ -122,32 +124,33 @@ public final class Config {
         }        
 
         public static class ArmSimulation {
-            public static final boolean SIMULATE_GRAVITY = false; // SingleJointedArmSim doesn't know it's a double jointed arm.
+            public static final boolean SIMULATE_GRAVITY = true; // SingleJointedArmSim doesn't know it's a double jointed arm.
             public static final double ARM0_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM0_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
             public static final double ARM1_MASS_KG = Units.lbsToKilograms(ArmFeedforward.ARM1_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
+            public static final double CONE_MASS_KG = Units.lbsToKilograms(ArmFeedforward.CONE_FORCE / ArmFeedforward.GRAVITATIONAL_CONSTANT);
 
             public static final double ARM0_NOISE =  2.0 * Math.PI / 4096;
             public static final double ARM1_NOISE =  2.0 * Math.PI / 4096;
 
-            public static final SingleJointedArmSim ARM0_SIM = new SingleJointedArmSim(
+            public static final FirstJointArmSim ARM0_SIM = new FirstJointArmSim(
                     DCMotor.getNEO(1),
                     ARM0_GEAR_RATIO,
                     SingleJointedArmSim.estimateMOI(ARM0_LENGTH, ARM0_MASS_KG),
                     ARM0_LENGTH,
                     Arm.ARM0_REVERSE_LIMIT,
                     Arm.ARM0_FORWARD_LIMIT,
-                    SIMULATE_GRAVITY, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
+                    true, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
                     VecBuilder.fill(ARM0_NOISE) // Add noise with a small std-dev
             );
 
-            public static final SingleJointedArmSim ARM1_SIM = new SingleJointedArmSim(
+            public static final SecondJointArmSim ARM1_SIM = new SecondJointArmSim(
                     DCMotor.getNEO(1),
                     ARM1_GEAR_RATIO,
                     SingleJointedArmSim.estimateMOI(ARM1_LENGTH, ARM1_MASS_KG),
                     ARM1_LENGTH, 
                     Arm.ARM1_REVERSE_LIMIT,
                     Arm.ARM1_FORWARD_LIMIT,
-                    SIMULATE_GRAVITY, // Don't sim gravity. SingleJointedArmSim doesn't know it's a double jointed arm.
+                    true,
                     VecBuilder.fill(ARM1_NOISE) // Add noise with a small std-dev
             );
         }

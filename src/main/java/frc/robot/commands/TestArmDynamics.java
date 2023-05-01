@@ -29,8 +29,8 @@ public class TestArmDynamics extends CommandBase {
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
-        double xSpeed = MathUtil.applyDeadband(m_controller.getRawAxis(0), 0.2);
-        double ySpeed = -1 * MathUtil.applyDeadband(m_controller.getRawAxis(1), 0.2);
+        double xSpeed = MathUtil.applyDeadband(m_controller.getRawAxis(0), 0.2) * 3;
+        double ySpeed = -1 * MathUtil.applyDeadband(m_controller.getRawAxis(1), 0.2) * 3;
 
         m_subsystem.setArmSpeeds(new ChassisSpeeds(xSpeed, ySpeed, 0));
     }

@@ -32,8 +32,8 @@ public class TestArmJointControl extends CommandBase {
         double xSpeed = MathUtil.applyDeadband(m_controller.getRawAxis(0), 0.2);
         double ySpeed = -1 * MathUtil.applyDeadband(m_controller.getRawAxis(1), 0.2);
 
-        m_subsystem.setArm0Speed(xSpeed);
-        m_subsystem.setArm1Speed(ySpeed);
+        m_subsystem.setArm0Speed(xSpeed*5);
+        m_subsystem.setArm1Speed(ySpeed*5);
     }
 
     // Called once the command ends or is interrupted.

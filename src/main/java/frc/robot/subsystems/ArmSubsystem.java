@@ -41,7 +41,8 @@ public class ArmSubsystem extends SubsystemBase {
         PositiveVelocityBias(0.06, 0.3),
         NegativeVelocityBias(0.06, -0.3),
         HeavyPositiveVelocityBias(0.1, 0.7),
-        HeavyNegativeVelocityBias(0.1, -0.7);
+        HeavyNegativeVelocityBias(0.1, -0.7),
+        NoBias(0, 0);
 
         private static final double HEAVY_DETERMINANT_RANGE = 0.1;
         private static final double LIGHT_DETERMINANT_RANGE = 0.06;
@@ -69,8 +70,8 @@ public class ArmSubsystem extends SubsystemBase {
     RelativeEncoder m_neoEncoder0, m_neoEncoder1;
     SparkMaxPIDController m_sparkPid0, m_sparkPid1;
 
-    private boolean m_haveCone;
-    private Arm1Bias m_arm1VelBias = Arm1Bias.NegativeVelocityBias;
+    private static boolean m_haveCone = false;
+    private Arm1Bias m_arm1VelBias = Arm1Bias.NoBias;
 
     /** Creates a new ArmSubsystem. */
     public ArmSubsystem() {
@@ -129,6 +130,13 @@ public class ArmSubsystem extends SubsystemBase {
 
         REVPhysicsSim.getInstance().addSparkMax(m_motor0, DCMotor.getNEO(1));
         REVPhysicsSim.getInstance().addSparkMax(m_motor1, DCMotor.getNEO(1));
+
+        // if (Robot.isSimulation()) {
+        //     ArmSimulation.ARM0_SIM.setInput(0);
+        //     ArmSimulation.ARM0_SIM.update(0.020);
+
+        //     ArmSimulation.ARM1_SIM.setInitalState(ArmSimulation.ARM0_SIM.getAngleRads(), Math.toRadians(20));
+        // }
     }
 
     @Override
@@ -155,9 +163,11 @@ public class ArmSubsystem extends SubsystemBase {
             motor1AppliedOutput = 0;
         }
 
+        System.out.println(RobotController.getBatteryVoltage());
+
         // Pass the simulation with the inputs as voltages
-        ArmSimulation.ARM0_SIM.setInput(motor0AppliedOutput * RobotController.getBatteryVoltage());
-        ArmSimulation.ARM1_SIM.setInput(motor1AppliedOutput * RobotController.getBatteryVoltage());
+        ArmSimulation.ARM0_SIM.setInputVoltage(motor0AppliedOutput * RobotController.getBatteryVoltage(), ArmSimulation.ARM1_SIM.getAngleRads(), m_haveCone);
+        ArmSimulation.ARM1_SIM.setInputVoltage(motor1AppliedOutput * RobotController.getBatteryVoltage(), ArmSimulation.ARM0_SIM.getAngleRads());
 
         // Update simulation
         ArmSimulation.ARM0_SIM.update(0.020); // 20ms clock cycle
@@ -186,7 +196,7 @@ public class ArmSubsystem extends SubsystemBase {
         return new Rotation2d(m_neoEncoder1.getPosition());
     }
 
-    private double calculateArm0GravityComp() {
+    private double calculateArm1GravityComp() {
         double enc2AtHorizontal = getArm1Position().getRadians() - (Math.PI - getArm0Position().getRadians());
         double voltsAtHorizontal;
         if (m_haveCone) {
@@ -197,19 +207,36 @@ public class ArmSubsystem extends SubsystemBase {
         return voltsAtHorizontal * Math.cos(enc2AtHorizontal);
     }
 
-    private double calculateArm1GravityComp() {
-        double encoder0Rad = getArm0Position().getRadians();
+    private double calculateArm0GravityComp() {
+        return calculateFirstJointMomentDueToGravity(
+                getArm0Position().getRadians(), 
+                getArm1Position().getRadians()
+            ) * ArmFeedforward.ARM0_MOMENT_TO_VOLTAGE;
+    }
 
-        double enc1AtHorizontal = getArm1Position().getRadians() - (Math.PI - encoder0Rad);
-        double arm0Moment = ArmFeedforward.ARM0_FORCE * (ArmFeedforward.LENGTH_ARM0_TO_COG * Math.cos(encoder0Rad));
-        double arm1Moment = ArmFeedforward.ARM1_FORCE * (Units.metersToInches(Arm.ARM0_LENGTH) * Math.cos(encoder0Rad)
-                + ArmFeedforward.LENGTH_ARM1_TO_COG * Math.cos(enc1AtHorizontal));
+    public static double calculateFirstJointMomentDueToGravity(double firstJointAngleRad, double secondJointAngleRad) {
+        double secondJointAtHorizontal = secondJointAngleRad - (Math.PI - firstJointAngleRad);
+
+        double firstJointMoment = ArmFeedforward.ARM0_FORCE * (ArmFeedforward.LENGTH_ARM0_TO_COG * Math.cos(firstJointAngleRad));
+        double secondJointMoment = ArmFeedforward.ARM1_FORCE * (Units.metersToInches(Arm.ARM0_LENGTH) * Math.cos(firstJointAngleRad)
+                + ArmFeedforward.LENGTH_ARM1_TO_COG * Math.cos(secondJointAtHorizontal));
         if (m_haveCone == false) {
-            return (arm0Moment + arm1Moment) * ArmFeedforward.ARM0_MOMENT_TO_VOLTAGE;
+            return firstJointMoment + secondJointMoment;
         } else {
             double coneMoment = ArmFeedforward.CONE_FORCE
-                    * (Units.metersToInches(Arm.ARM0_LENGTH) * Math.cos(encoder0Rad) + Units.metersToInches(Arm.ARM1_LENGTH) * Math.cos(enc1AtHorizontal));
-            return (arm0Moment + arm1Moment + coneMoment) * ArmFeedforward.ARM0_MOMENT_TO_VOLTAGE;
+                    * (Units.metersToInches(Arm.ARM0_LENGTH) * Math.cos(firstJointAngleRad) + Units.metersToInches(Arm.ARM1_LENGTH) * Math.cos(secondJointAtHorizontal));
+            return firstJointMoment + secondJointMoment + coneMoment;
+        }
+    }
+
+    public static double calculateMomentOfInertia(double firstJointAngleRad, double secondJointAngleRad) {
+        if (m_haveCone) {
+            return ArmSimulation.ARM0_MASS_KG * ArmFeedforward.LENGTH_ARM0_TO_COG * ArmFeedforward.LENGTH_ARM0_TO_COG + 
+                    ArmSimulation.ARM1_MASS_KG * ArmFeedforward.LENGTH_ARM1_TO_COG * ArmFeedforward.LENGTH_ARM1_TO_COG + 
+                    ArmSimulation.CONE_MASS_KG * Arm.ARM1_LENGTH * Arm.ARM1_LENGTH;
+        } else {
+            return ArmSimulation.ARM0_MASS_KG * ArmFeedforward.LENGTH_ARM0_TO_COG * ArmFeedforward.LENGTH_ARM0_TO_COG + 
+                    ArmSimulation.ARM1_MASS_KG * ArmFeedforward.LENGTH_ARM1_TO_COG * ArmFeedforward.LENGTH_ARM1_TO_COG;
         }
     }
 
@@ -356,6 +383,15 @@ public class ArmSubsystem extends SubsystemBase {
                 
                 setArm1Speed(-7);
             } else {
+                setArm1Speed(0);
+            }
+        }
+        else if (m_arm1VelBias == Arm1Bias.NoBias) {
+            if (Math.abs(angularSpeeds[2]) > 0.04) {
+                setArm0Speed(angularSpeeds[0]);
+                setArm1Speed(angularSpeeds[1]);
+            } else {
+                setArm0Speed(0);
                 setArm1Speed(0);
             }
         }        
