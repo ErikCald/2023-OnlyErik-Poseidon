@@ -4,7 +4,11 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.server.PathPlannerServer;
+
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -21,16 +25,27 @@ public class Robot extends TimedRobot {
 
     private RobotContainer m_robotContainer;
 
+    private static boolean isSimulation = false;
+
     /**
      * This function is run when the robot is first started up and should be used
      * for any initialization code.
      */
     @Override
     public void robotInit() {
+        PathPlannerServer.startServer(5811);
+        
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
+
+        // Add CommandScheduler to shuffleboard so we can display what commands are scheduled
+        ShuffleboardTab basicDebuggingTab = Shuffleboard.getTab("BasicDebugging");
+        basicDebuggingTab
+            .add("CommandScheduler", CommandScheduler.getInstance())
+            .withPosition(3, 0)
+            .withSize(3, 6);
     }
 
     /**
@@ -110,10 +125,16 @@ public class Robot extends TimedRobot {
     /** This function is called once when the robot is first started up. */
     @Override
     public void simulationInit() {
+        isSimulation = true;
     }
 
     /** This function is called periodically whilst in simulation. */
     @Override
     public void simulationPeriodic() {
+    }
+
+
+    public static boolean isSimulation() {
+        return isSimulation;
     }
 }
