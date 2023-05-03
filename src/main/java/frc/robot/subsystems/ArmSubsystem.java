@@ -14,6 +14,7 @@ import com.revrobotics.REVPhysicsSim;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -69,6 +70,8 @@ public class ArmSubsystem extends SubsystemBase {
     CANSparkMax m_motor0, m_motor1;
     RelativeEncoder m_neoEncoder0, m_neoEncoder1;
     SparkMaxPIDController m_sparkPid0, m_sparkPid1;
+
+    PIDController m_rioPid0, m_rioPid1;
 
     private static boolean m_haveCone = false;
     private Arm1Bias m_arm1VelBias = Arm1Bias.NoBias;
@@ -126,8 +129,10 @@ public class ArmSubsystem extends SubsystemBase {
         m_sparkPid1.setI(ArmPid.ARM1_PID.kI);
         m_sparkPid1.setD(ArmPid.ARM1_PID.kD);
         m_sparkPid1.setIZone(ArmPid.ARM1_IZONE);
-        
 
+        m_rioPid0 = new PIDController(ArmPid.ARM0_PID.kP, ArmPid.ARM0_PID.kI, ArmPid.ARM0_PID.kD);
+        m_rioPid1 = new PIDController(ArmPid.ARM1_PID.kP, ArmPid.ARM1_PID.kI, ArmPid.ARM1_PID.kD);
+        
         REVPhysicsSim.getInstance().addSparkMax(m_motor0, DCMotor.getNEO(1));
         REVPhysicsSim.getInstance().addSparkMax(m_motor1, DCMotor.getNEO(1));
 
@@ -406,9 +411,13 @@ public class ArmSubsystem extends SubsystemBase {
         double voltage;
         if (!Robot.isSimulation() || ArmSimulation.SIMULATE_GRAVITY)  {
             voltage = ArmFeedforward.ARM0_SIMEPLE_FF.calculate(angularSpeed) + calculateArm0GravityComp();
+            voltage += m_rioPid0.calculate(ArmSimulation.ARM_SIM.getFirstJointVelocityRadPerSec(), angularSpeed);
         } else {
             voltage = ArmFeedforward.ARM0_SIMEPLE_FF.calculate(angularSpeed);
+            
         }
+
+        
         // System.out.println(angularSpeed +", "+ voltage);
 
         // m_sparkPid0.setReference(angularSpeed, ControlType.kVelocity, 0, voltage);
@@ -420,10 +429,12 @@ public class ArmSubsystem extends SubsystemBase {
         double voltage;
         if (!Robot.isSimulation() || ArmSimulation.SIMULATE_GRAVITY)  {
             voltage = ArmFeedforward.ARM1_SIMEPLE_FF.calculate(angularSpeed) + calculateArm1GravityComp();
+            voltage += m_rioPid1.calculate(ArmSimulation.ARM_SIM.getSecondJointVelocityRadPerSec(), angularSpeed);
         } else {
             voltage = ArmFeedforward.ARM1_SIMEPLE_FF.calculate(angularSpeed);
         }
         
+        voltage += m_rioPid1.calculate(m_neoEncoder1.getVelocity(), angularSpeed);
         // m_sparkPid1.setReference(angularSpeed, ControlType.kVelocity, 0, voltage);
 
         m_sparkPid1.setReference(voltage, ControlType.kVoltage);

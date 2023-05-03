@@ -12,7 +12,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
-import frc.robot.subsystems.DoubleJointedArmSim;
+import frc.robot.subsystems.DoubleJointedArmSimV2;
 
 /**
  * The Config class provides a convenient place for robot-wide numerical or
@@ -64,7 +64,7 @@ public final class Config {
         public static final double ARM1_LENGTH = Units.inchesToMeters(38.6);
 
         public static final double ARM0_GEAR_RATIO = 62.5; // A number greater than 1 represents a reduction
-        public static final double ARM1_GEAR_RATIO = 60;// 23.5;
+        public static final double ARM1_GEAR_RATIO =  23.5;
 
         public static final boolean ARM0_INVERTED = true;
         public static final boolean ARM1_INVERTED = true;
@@ -89,11 +89,11 @@ public final class Config {
         public static final double ARM1_CF_VEL = ARM1_CF_POS / 60.0;
         
         public static class ArmPid {
-            public static final PIDConstants ARM0_PID = new PIDConstants(0.1, 0, 0);
+            public static final PIDConstants ARM0_PID = new PIDConstants(0.01, 0, 0);
             public static final double ARM0_FF = 0;
             public static final double ARM0_IZONE = 0;
 
-            public static final PIDConstants ARM1_PID = new PIDConstants(0.1, 0, 0);
+            public static final PIDConstants ARM1_PID = new PIDConstants(0.01, 0, 0);
             public static final double ARM1_FF = 0;
             public static final double ARM1_IZONE = 0;
         }
@@ -108,9 +108,9 @@ public final class Config {
             /**
              * Gravity Compensation
              */
-            public static final double ARM1_HORIZONTAL_VOLTAGE = 0.05;// 0.114;  // Poseiden: 1.5;
+            public static final double ARM1_HORIZONTAL_VOLTAGE = 0.32;// 0.114;  // Poseiden: 1.5;
             public static final double ARM1_HORIZONTAL_VOLTAGE_CONE = 0.23; // Poseiden: 2.3;
-            public static final double ARM0_MOMENT_TO_VOLTAGE = 0.000002;// 0.0000014;  // Poseiden: 0.000005; 
+            public static final double ARM0_MOMENT_TO_VOLTAGE = 0.0000023;// 0.0000014;  // Poseiden: 0.000005; 
 
             public static final double LENGTH_ARM0_TO_COG = 14.56;
             public static final double LENGTH_ARM1_TO_COG = 28.22;
@@ -157,7 +157,7 @@ public final class Config {
             //         VecBuilder.fill(ARM1_NOISE) // Add noise with a small std-dev
             // );
 
-            public static final DoubleJointedArmSim ARM_SIM = new DoubleJointedArmSim(
+            public static final DoubleJointedArmSimV2 ARM_SIM = new DoubleJointedArmSimV2(
                 DCMotor.getNEO(1), 
                 ARM0_GEAR_RATIO, 
                 VecBuilder.fill(ARM0_NOISE), // Add noise with a small std-dev, 
