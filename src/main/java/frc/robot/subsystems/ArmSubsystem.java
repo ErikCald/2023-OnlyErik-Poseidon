@@ -27,13 +27,13 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.custompathplanner.PPArmCommand;
 import frc.robot.Config.Arm;
 import frc.robot.Config.Arm.ArmFeedforward;
 import frc.robot.Config.Arm.ArmPathPlanner;
 import frc.robot.Config.Arm.ArmPid;
 import frc.robot.Config.Arm.ArmSimulation;
 import frc.robot.Config.CANID;
+import frc.lib.custompathplanner.PPArmCommand;
 import frc.robot.Robot;
 
 public class ArmSubsystem extends SubsystemBase {

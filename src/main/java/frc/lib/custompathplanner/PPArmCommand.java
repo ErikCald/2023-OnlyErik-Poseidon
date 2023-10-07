@@ -1,4 +1,4 @@
-package frc.custompathplanner;
+package frc.lib.custompathplanner;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

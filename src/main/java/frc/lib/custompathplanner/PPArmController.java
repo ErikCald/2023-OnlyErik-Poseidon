@@ -1,4 +1,4 @@
-package frc.custompathplanner;
+package frc.lib.custompathplanner;
 
 import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;
 import edu.wpi.first.math.controller.PIDController;
