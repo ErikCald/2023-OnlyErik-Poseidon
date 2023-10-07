@@ -391,4 +391,8 @@ public class ArmSubsystem extends SubsystemBase {
     public CommandBase setArm1VelocityBias(Arm1Bias bias) {
         return Commands.runOnce(() -> m_arm1VelBias = bias);
     }
+
+    public void setPoseSetpoint(Pose2d pose) {
+        // do stuff...
+    }
 }
