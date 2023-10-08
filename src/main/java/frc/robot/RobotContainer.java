@@ -48,12 +48,7 @@ public class RobotContainer {
      */
     private void configureBindings() {
         // Setup default commands
-        m_swerve.setDefaultCommand(
-                new TeleopSwerveCommand(
-                        m_swerve,
-                        () -> -driver.getRawAxis(Config.JoystickConfig.TRANSLATION_AXIS),
-                        () -> -driver.getRawAxis(Config.JoystickConfig.STRAFE_AXIS),
-                        () -> -driver.getRawAxis(Config.JoystickConfig.ROTATION_AXIS)));
+        m_swerve.setDefaultCommand(new TeleopSwerveCommand(driver));
 
         // a,b,x,y
         driver.a().onTrue(m_armPaths.testPath1());

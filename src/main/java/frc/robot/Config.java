@@ -152,6 +152,15 @@ public final class Config {
         public static final Constraints TRANSLATION_PID_SPEEDS = new Constraints(2, 1); // 2,2
         public static final Constraints ROTATION_PID_SPEEDS = new Constraints(2 * Math.PI, 3 * Math.PI); // 4pi, 8pi
 
+        /* Tolerances to checking if the robot is at a given odometry pose */
+        public static final double TIGHT_POS_TOLERANCE = 0.01;
+        public static final double TIGHT_ANGLE_TOLERANCE = Math.toRadians(0.5);
+        public static final double TIGHT_VEL_TOLERANCE = 0.01;
+        public static final double TIGHT_ANGULAR_VEL_TOLERANCE = Math.toRadians(0.2);
+        
+        public static final double LOOSE_POS_TOLERANCE = 0.1;
+        public static final double LOOSE_ANGLE_TOLERANCE = Math.toRadians(4);
+
         /* Module Specific Constants */
         /* Front Left Module - Module 0 */
         public static final class Mod0 {

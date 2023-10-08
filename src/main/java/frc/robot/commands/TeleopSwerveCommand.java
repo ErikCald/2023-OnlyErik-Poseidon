@@ -4,26 +4,30 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Config;
 import frc.robot.subsystems.SwerveSubsystem;
 
 public class TeleopSwerveCommand extends CommandBase {
-  private SwerveSubsystem s_Swerve;
   private DoubleSupplier translationSup;
   private DoubleSupplier strafeSup;
   private DoubleSupplier rotationSup;
 
+  public TeleopSwerveCommand(CommandXboxController driver) {
+    this(
+      () -> -driver.getRawAxis(Config.JoystickConfig.TRANSLATION_AXIS),
+      () -> -driver.getRawAxis(Config.JoystickConfig.STRAFE_AXIS),
+      () -> -driver.getRawAxis(Config.JoystickConfig.ROTATION_AXIS));
+  }
   public TeleopSwerveCommand(
-      SwerveSubsystem s_Swerve,
       DoubleSupplier translationSup,
       DoubleSupplier strafeSup,
       DoubleSupplier rotationSup) {
-    this.s_Swerve = s_Swerve;
-    addRequirements(s_Swerve);
-
     this.translationSup = translationSup;
     this.strafeSup = strafeSup;
     this.rotationSup = rotationSup;
+
+    addRequirements(SwerveSubsystem.getInstance());
   }
 
   @Override
@@ -38,7 +42,7 @@ public class TeleopSwerveCommand extends CommandBase {
     rotationVal *= Config.Swerve.TELEOP_ANGULAR_SPEED;
 
     /* Drive */
-    s_Swerve.drive(
+    SwerveSubsystem.getInstance().drive(
         translationVal, strafeVal,
         rotationVal,
         true,

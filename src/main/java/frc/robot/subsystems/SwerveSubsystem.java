@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Config;
+import frc.robot.Config.Swerve;
 
 public class SwerveSubsystem extends SubsystemBase {
   private static SwerveSubsystem INSTANCE;
@@ -203,7 +204,7 @@ public class SwerveSubsystem extends SubsystemBase {
       return ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getHeading().unaryMinus());
     }
   }
-  
+
   public void resetDriveToPose() {
     ChassisSpeeds speeds = getSpeeds(true);
 
@@ -222,6 +223,25 @@ public class SwerveSubsystem extends SubsystemBase {
     rotSpeed += m_rotPid.getSetpoint().velocity;
 
     drive(xSpeed, ySpeed, rotSpeed, true, false);
+  }
+
+  public boolean isAtPose(Pose2d pose, boolean tightTolerance) {
+    Pose2d poseError = getPose().relativeTo(pose);
+
+    if (tightTolerance) {
+      ChassisSpeeds speeds = getSpeeds(false);
+
+      return Math.abs(poseError.getX()) < Swerve.TIGHT_POS_TOLERANCE &&
+          Math.abs(poseError.getY()) < Swerve.TIGHT_POS_TOLERANCE &&
+          Math.abs(poseError.getRotation().getRadians()) < Swerve.TIGHT_ANGLE_TOLERANCE &&
+          Math.abs(speeds.vxMetersPerSecond) < Swerve.TIGHT_VEL_TOLERANCE &&
+          Math.abs(speeds.vyMetersPerSecond) < Swerve.TIGHT_VEL_TOLERANCE &&
+          Math.abs(speeds.omegaRadiansPerSecond) < Swerve.TIGHT_ANGULAR_VEL_TOLERANCE;
+    } else {
+      return Math.abs(poseError.getX()) < Swerve.LOOSE_POS_TOLERANCE &&
+          Math.abs(poseError.getY()) < Swerve.LOOSE_POS_TOLERANCE &&
+          Math.abs(poseError.getRotation().getRadians()) < Swerve.LOOSE_ANGLE_TOLERANCE;
+    }
   }
 
   @Override

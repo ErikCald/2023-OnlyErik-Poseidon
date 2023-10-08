@@ -6,6 +6,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "Launch VisionSubsystem",
+      "request": "launch",
+      "mainClass": "frc.robot.subsystems.VisionSubsystem",
+      "projectName": "2023-OnlyErik-Poseidon"
+    },
+    {
+      "type": "java",
       "name": "Launch ArmSubsystem",
       "request": "launch",
       "mainClass": "frc.robot.subsystems.ArmSubsystem",
