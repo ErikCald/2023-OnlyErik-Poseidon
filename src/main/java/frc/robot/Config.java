@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
@@ -143,6 +144,13 @@ public final class Config {
 
         /* Steer Encoder Invert */
         public static final boolean CANCODER_INVERT = false;
+
+        /* Constants for the drive to point with odometry system */
+        public static final PIDConstants TRANSLATION_PID = new PIDConstants(0.5, 0, 0);
+        public static final PIDConstants ROTATION_PID = new PIDConstants(0.5, 0, 0);
+
+        public static final Constraints TRANSLATION_PID_SPEEDS = new Constraints(2, 1); // 2,2
+        public static final Constraints ROTATION_PID_SPEEDS = new Constraints(2 * Math.PI, 3 * Math.PI); // 4pi, 8pi
 
         /* Module Specific Constants */
         /* Front Left Module - Module 0 */

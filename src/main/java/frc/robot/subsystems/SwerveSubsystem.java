@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.sensors.PigeonIMU;
+import com.pathplanner.lib.auto.PIDConstants;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -58,7 +59,10 @@ public class SwerveSubsystem extends SubsystemBase {
         getPositions(),
         new Pose2d());
 
-    m_xPid = new ProfiledPIDController(0, 0, 0, new Constraints(2, 2));
+    m_xPid = createPidFromConstants(Config.Swerve.TRANSLATION_PID, Config.Swerve.TRANSLATION_PID_SPEEDS);
+    m_yPid = createPidFromConstants(Config.Swerve.TRANSLATION_PID, Config.Swerve.TRANSLATION_PID_SPEEDS);
+    m_rotPid = createPidFromConstants(Config.Swerve.ROTATION_PID, Config.Swerve.ROTATION_PID_SPEEDS);
+    m_rotPid.enableContinuousInput(0, 2 * Math.PI);
   }
 
   /**
@@ -190,6 +194,36 @@ public class SwerveSubsystem extends SubsystemBase {
     return m_odometry.getPoseMeters().getRotation();
   }
 
+  public ChassisSpeeds getSpeeds(boolean fieldRelative) {
+    ChassisSpeeds speeds = Config.Swerve.SWERVE_KINEMATICS.toChassisSpeeds(getStates());
+
+    if (!fieldRelative) {
+      return speeds;
+    } else {
+      return ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getHeading().unaryMinus());
+    }
+  }
+  
+  public void resetDriveToPose() {
+    ChassisSpeeds speeds = getSpeeds(true);
+
+    m_xPid.reset(getPose().getX(), speeds.vxMetersPerSecond);
+    m_yPid.reset(getPose().getY(), speeds.vyMetersPerSecond);
+    m_rotPid.reset(getHeading().getRadians(), speeds.omegaRadiansPerSecond);
+  }
+
+  public void driveToPose(Pose2d pose) {
+    double xSpeed = m_xPid.calculate(getPose().getX(), pose.getX());
+    double ySpeed = m_yPid.calculate(getPose().getY(), pose.getY());
+    double rotSpeed = m_rotPid.calculate(getHeading().getRadians(), pose.getRotation().getRadians());
+
+    xSpeed += m_xPid.getSetpoint().velocity;
+    ySpeed += m_yPid.getSetpoint().velocity;
+    rotSpeed += m_rotPid.getSetpoint().velocity;
+
+    drive(xSpeed, ySpeed, rotSpeed, true, false);
+  }
+
   @Override
   public void periodic() {
     m_odometry.update(getYaw(), getPositions());
@@ -210,5 +244,13 @@ public class SwerveSubsystem extends SubsystemBase {
             new Pose2d(
                 getPose().getTranslation(),
                 newHeading)));
+  }
+
+  private ProfiledPIDController createPidFromConstants(PIDConstants constants, Constraints constraints) {
+    return new ProfiledPIDController(
+      constants.kP, 
+      constants.kI, 
+      constants.kD, 
+      constraints);
   }
 }
