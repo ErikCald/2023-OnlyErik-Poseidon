@@ -1,4 +1,4 @@
-package frc.custompathplanner;
+package frc.lib.custompathplanner;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;

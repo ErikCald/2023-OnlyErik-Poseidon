@@ -27,7 +27,7 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.custompathplanner.PPArmCommand;
+import frc.lib.custompathplanner.PPArmCommand;
 import frc.robot.Config.Arm;
 import frc.robot.Config.Arm.ArmFeedforward;
 import frc.robot.Config.Arm.ArmPathPlanner;

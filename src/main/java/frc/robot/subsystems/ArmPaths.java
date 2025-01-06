@@ -13,7 +13,7 @@ import com.pathplanner.lib.PathPlannerTrajectory;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.custompathplanner.ArmAutoBuilder;
+import frc.lib.custompathplanner.ArmAutoBuilder;
 import frc.robot.Config.Arm.ArmPathPlanner;
 import frc.robot.subsystems.ArmSubsystem.Arm1Bias;
 

@@ -9,12 +9,10 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Config.JoystickConfig;
 import frc.robot.auto.Autos;
-import frc.robot.commands.TeleopSwerveCommand;
 import frc.robot.commands.TestArmDynamics;
 import frc.robot.subsystems.ArmPaths;
 import frc.robot.subsystems.ArmPneumaticsSubsystem;
 import frc.robot.subsystems.ArmSubsystem;
-import frc.robot.subsystems.SwerveSubsystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -25,7 +23,7 @@ import frc.robot.subsystems.SwerveSubsystem;
  */
 public class RobotContainer {
     // Subsystems
-    private final SwerveSubsystem m_swerve = SwerveSubsystem.getInstance();
+    // private final SwerveSubsystem m_swerve = SwerveSubsystem.getInstance();
 
     private final ArmSubsystem m_armSubsystem = new ArmSubsystem();
     private final ArmPneumaticsSubsystem m_armPneumaticSubsystem = new ArmPneumaticsSubsystem();
@@ -48,12 +46,12 @@ public class RobotContainer {
      */
     private void configureBindings() {
             // Setup default commands
-            m_swerve.setDefaultCommand(
-        new TeleopSwerveCommand(
-            m_swerve,
-            () -> -driver.getRawAxis(Config.JoystickConfig.TRANSLATION_AXIS),
-            () -> -driver.getRawAxis(Config.JoystickConfig.STRAFE_AXIS),
-            () -> -driver.getRawAxis(Config.JoystickConfig.ROTATION_AXIS)));
+        //     m_swerve.setDefaultCommand(
+        // new TeleopSwerveCommand(
+        //     m_swerve,
+        //     () -> -driver.getRawAxis(Config.JoystickConfig.TRANSLATION_AXIS),
+        //     () -> -driver.getRawAxis(Config.JoystickConfig.STRAFE_AXIS),
+        //     () -> -driver.getRawAxis(Config.JoystickConfig.ROTATION_AXIS)));
             
         // a,b,x,y
         driver.a().onTrue(m_armPaths.testPath1());
